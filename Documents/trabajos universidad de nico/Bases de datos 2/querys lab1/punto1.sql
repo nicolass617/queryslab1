@@ -1,14 +1,15 @@
-SELECT p."name", SUM(s.UNITPRICE * s.ORDERQTY) as cant
-FROM SALES.SALESORDERDETAIL as s
-INNER JOIN PRODUCTION.PRODUCT as p
-ON s.PRODUCTID = p.PRODUCTID
-INNER JOIN SALES.SALESORDERHEADER as sh
-ON s.SALESORDERID = sh.SALESORDERID
-inner JOIN 	(SELECT MAX(ORDERDATE) as ORDERDATE FROM SALES.SALESORDERHEADER) LASTDATE
-on sh.ORDERDATE = LASTDATE.ORDERDATE
-group by p."name"
-order by cant desc limit 1;
-
+SELECT product.productid, SUM(detail.orderqty) as counting, 
+SUM(detail.orderqty * detail.unitprice) as qty_sales, product.name 
+FROM sales.salesorderdetail as detail 
+inner join production.product as product 
+on product.productid = detail.productid 
+INNER JOIN sales.salesorderheader as orderheader 
+ON orderheader.salesorderid = detail.salesorderid 
+WHERE EXTRACT(MONTH FROM orderheader.orderdate) = 
+EXTRACT(MONTH FROM (SELECT MAX(orderdate) FROM sales.salesorderheader))
+AND EXTRACT(YEAR FROM orderheader.orderdate) = 
+EXTRACT(YEAR FROM (SELECT MAX(orderdate) FROM sales.salesorderheader))
+GROUP BY product.productid ORDER BY counting DESC LIMIT 1;
 
 create index productid
 on sales.salesorderdetail (productid);
